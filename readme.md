@@ -1,4 +1,7 @@
 # Orchestrator 
+**Author:** Vivek Anandh  
+**Date:** April 19, 2025
+
 This README guides you through setting up the Docker‑based network topology, installing FRR/OSPF on the routers, configuring the hosts, and using the Python orchestrator to dynamically switch traffic between the two OSPF paths (north: R1→R2→R3, south: R1→R4→R3) without packet loss.
 
 ---
@@ -17,11 +20,10 @@ This README guides you through setting up the Docker‑based network topology, i
 
 ## Prerequisites
 
-On your POWDER VM (or any Ubuntu‑based Linux host):
+On POWDER VM 
 
-- **Docker** & **Docker Compose** (v2.x)  
-- **Python 3** (≥ 3.6)  
-- **xterm** (for demo windows)  
+- **Docker** & **Docker Compose** 
+- **Python 3** 
 - `curl`, `git`, `md5sum`  
 
 ---
@@ -150,12 +152,22 @@ The orchestrator script wraps all setup and traffic‑switching steps:
    ./orchestrator.py --setup
    ```
 
-2. **Open four xterms** (titles for clarity):
+2. **Open four xterms**:
    ```bash
-   xterm -T HostA -e "docker exec -it hosta bash -c 'ping 10.0.15.3'" &
-   xterm -T R1    -e "docker exec -it r1    bash -c 'tcpdump -i any icmp'" &
-   xterm -T R4    -e "docker exec -it r4    bash -c 'tcpdump -i any icmp'" &
-   xterm -T HostB -e "docker exec -it hostb bash -c 'tcpdump -i any icmp'" &
+   sudo bash
+   docker exec -it r1 tcpdump -i any icmp
+   ```
+   ```bash
+   sudo bash
+   docker exec -it r4 tcpdump -i any icmp
+   ```
+   ```bash
+   sudo bash
+   docker exec -it hostb tcpdump -i any icmp
+   ```
+   ```bash
+   sudo bash
+   docker exec -it hosta ping 10.0.15.3
    ```
 
 3. **Show baseline path**  
