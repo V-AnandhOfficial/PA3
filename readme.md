@@ -1,10 +1,11 @@
-# Orchestrator 
+# Orchestrator  
 **Author:** Vivek Anandh  
-**Date:** April 19, 2025
+**Date:** April 19, 2025
 
 This README guides you through setting up the Docker‑based network topology, installing FRR/OSPF on the routers, configuring the hosts, and using the Python orchestrator to dynamically switch traffic between the two OSPF paths (north: R1→R2→R3, south: R1→R4→R3) without packet loss.
 
 ---
+
 ## Table of Contents
 
 1. [Prerequisites](#prerequisites)  
@@ -20,15 +21,17 @@ This README guides you through setting up the Docker‑based network topology, i
 
 ## Prerequisites
 
-On POWDER VM 
+On POWDER VM:
 
-- **Docker** & **Docker Compose** 
-- **Python 3** 
+- Docker & Docker Compose  
+- Python 3  
 - `curl`, `git`, `md5sum`  
+- `xterm` (for demo windows)
 
 ---
 
 ## Topology & IP Plan
+
 ```
                 -R2-
               /       \
@@ -39,7 +42,7 @@ On POWDER VM
                 -R4-
 ```
 
-| Link          | Subnet          | A IP /24   | B IP /24   |
+| Link          | Subnet          | A IP /24   | B IP /24   |
 |--------------:|:---------------:|:----------:|:----------:|
 | HostA–R1      | 10.0.14.0/24    | 10.0.14.3  | 10.0.14.4  |
 | R1–R2 (north) | 10.0.10.0/24    | 10.0.10.3  | 10.0.10.4  |
@@ -55,11 +58,10 @@ On POWDER VM
 ```
 PA3/
 ├── docker-compose.yaml
-├── Dockerfile            # Builds a base host/router container
+├── Dockerfile            # Builds base host/router container
 ├── dockersetup           # Installs Docker & Compose
-├── orchestrator.py       # Python script (executable)
-└── PA3 Demo Video.mov    # Demo Video
-└── README.md             
+├── Vivek_Anandh_U1241037.py  # Orchestrator script (executable)
+└── README.md             # ← you are here
 ```
 
 ---
@@ -67,32 +69,29 @@ PA3/
 ## Initial Setup
 
 ```bash
-# 1. Clone the student repo
+# Clone the repo
 git clone https://github.com/V-AnandhOfficial/PA3.git
 cd PA3
 
-# 2. Install Docker & Compose (provided script)
+# Install Docker & Compose
 ./dockersetup
 
-# 3. Verify Docker is running
+# Verify Docker is running
 docker ps
 docker network ls
 
-# 4. Make the orchestrator executable
-chmod +x orchestrator.py
+# Make orchestrator executable
+chmod +x Vivek_Anandh_U1241037.py
 ```
 
 ---
 
 ## Docker Compose Topology
 
-The `docker-compose.yaml` brings up 6 containers (hosta, r1, r2, r3, r4, hostb) and 6 bridge networks. To start:
+Bring up containers:
 
 ```bash
-# Start all containers in detached mode
 docker compose up -d
-
-# Confirm
 docker ps
 docker network ls
 ```
@@ -101,112 +100,83 @@ docker network ls
 
 ## Orchestrator Usage
 
-The orchestrator script wraps all setup and traffic‑switching steps:
+Show help:
 
 ```bash
-./orchestrator.py --help
+./Vivek_Anandh_U1241037.py --help
 ```
 
 ### Key Flags
 
-- `--start`  
-  Starts containers (`docker compose up -d`).
-
-- `--setup`  
-  Equivalent to:  
-  1. `--start`  
-  2. install FRR & OSPF on all routers  
-  3. configure OSPF (north path by default)  
-  4. configure host routes
-
-- `--show-neighbors`  
-  Display `show ip ospf neighbor` on each router.
-
-- `--show-routes`  
-  Display OSPF-learned routes on each router.
-
-- `--ping`  
-  Run `ping -c4 10.0.15.3` from HostA.
-
-- `--traceroute`  
-  Run `traceroute -n 10.0.15.3` from HostA.
-
-- `--continuous-ping`  
-  Start a background `ping 10.0.15.3` from HostA (Ctrl+C to stop).
-
-- `--switch-to-south`  
-  Adjust OSPF link costs to prefer R1→R4→R3.
-
-- `--switch-to-north`  
-  Adjust OSPF link costs to prefer R1→R2→R3.
-
-- `--stop`  
-  Tear down containers (`docker compose down`).
+- `--start`               Start containers  
+- `--setup`               Start containers, install FRR, configure OSPF, set host routes  
+- `--show-neighbors`      `show ip ospf neighbor` on all routers  
+- `--show-routes`         Display OSPF routes on all routers  
+- `--ping`                `ping -c4 10.0.15.3` from HostA  
+- `--traceroute`          `traceroute -n 10.0.15.3` from HostA  
+- `--continuous-ping`     Continuous `ping 10.0.15.3` from HostA  
+- `--switch-to-south`     Force path R1→R4→R3  
+- `--switch-to-north`     Force path R1→R2→R3  
+- `--stop`                `docker compose down`
 
 ---
 
 ## Demo Steps
 
-1. **Bring up & configure**  
+1. **Setup**  
    ```bash
-   ./orchestrator.py --setup
+   ./Vivek_Anandh_U1241037.py --setup
    ```
 
-2. **Open four xterms**:
-   ```bash
+2. **Open four xterms**:  
+   ```
    sudo bash
    docker exec -it r1 tcpdump -i any icmp
    ```
-   ```bash
+   ```
    sudo bash
    docker exec -it r4 tcpdump -i any icmp
    ```
-   ```bash
+   ```
    sudo bash
    docker exec -it hostb tcpdump -i any icmp
    ```
-   ```bash
+   ```
    sudo bash
    docker exec -it hosta ping 10.0.15.3
    ```
 
-3. **Show baseline path**  
+3. **Baseline path**  
    ```bash
-   ./orchestrator.py --traceroute
+   ./Vivek_Anandh_U1241037.py --traceroute
    # Expect hops via 10.0.10.4 → 10.0.11.4
    ```
 
-4. **Start continuous ping** (in HostA xterm)  
-   Already running from step 2.
-
-5. **Switch North → South**  
-   In your host terminal:
+4. **Switch North→South**  
    ```bash
-   ./orchestrator.py --switch-to-south
+   ./Vivek_Anandh_U1241037.py --switch-to-south
    ```
-   Watch all four xterms—no packet loss.
+   Watch no packet loss.
 
-6. **Verify new path**  
+5. **Verify South path**  
    ```bash
-   ./orchestrator.py --traceroute
+   ./Vivek_Anandh_U1241037.py --traceroute
    # Expect hops via 10.0.13.3 → 10.0.12.3
    ```
 
-7. **Switch South → North**  
+6. **Switch South→North**  
    ```bash
-   ./orchestrator.py --switch-to-north
+   ./Vivek_Anandh_U1241037.py --switch-to-north
    ```
-   Again, watch zero loss.
+   Watch no packet loss.
 
-8. **End continuous ping**  
-   Ctrl+C in the HostA xterm.
+7. **End ping**  
+   Ctrl+C in HostA xterm.
 
 ---
 
 ## Cleanup
 
 ```bash
-./orchestrator.py --stop
+./Vivek_Anandh_U1241037.py --stop
 ```
-
-All containers and networks will be removed.
